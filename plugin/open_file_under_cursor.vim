@@ -22,6 +22,13 @@ function! GotoFile(w)
         if ! filereadable(fullname)
             " the last try, using current directory based on file opened.
             let fullname = expand('%:h') . '/' . fname
+            " continue try for Node.js Module require algorithm
+            for ext in ['js', 'json', 'node']
+              if filereadable(fullname)
+                break
+              endif
+              let fullname = expand('%:h') . '/' . fname . '.' . ext
+            endfor
         endif
     endif
 
@@ -30,7 +37,8 @@ function! GotoFile(w)
         new
     endif
     " Use 'find' so path is searched like 'gf' would
-    execute 'find ' . pos . ' ' . fname
+    " execute 'find ' . pos . ' ' . fname
+    execute 'find ' . pos . ' ' . fullname
 endfunction
 
 set isfname+=: " include colon in filenames
