@@ -37,29 +37,16 @@ function! GotoFile(w)
         " after relative try, try node_modules
         if ! filereadable(fullname)
             " continue try for Node.js Module require algorithm
-            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
-              let fullname = getcwd() . '/node_modules/' . fname . relativeExt
-              if filereadable(fullname)
-                break
-              endif
-            endfor
-        endif
-        if ! filereadable(fullname)
-            " continue try for Node.js Module require algorithm
-            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
-              let fullname = getcwd() . '/../node_modules/' . fname . relativeExt
-              if filereadable(fullname)
-                break
-              endif
-            endfor
-        endif
-        if ! filereadable(fullname)
-            " continue try for Node.js Module require algorithm
-            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
-              let fullname = getcwd() . '/../../node_modules/' . fname . relativeExt
-              if filereadable(fullname)
-                break
-              endif
+            for nodeModule in ['', '/..', '/../..']
+                for moduleExt in ['', '.js', '.json', '.node', '/index.js']
+                    let fullname = getcwd() . nodeModule . '/node_modules/' . fname . moduleExt
+                    if filereadable(fullname)
+                        break
+                    endif
+                endfor
+                if filereadable(fullname)
+                    break
+                endif
             endfor
         endif
     endif
