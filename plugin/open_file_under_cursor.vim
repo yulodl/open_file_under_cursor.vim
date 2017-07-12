@@ -18,16 +18,48 @@ function! GotoFile(w)
         let fullname = fname
     else
         " try find file with prefix by working directory
-        let fullname = getcwd() . '/' . fname
+        for rootExt in ['', '.js', '.json', '.node', '/index.js']
+            let fullname = getcwd() . '/' . fname . rootExt
+            if filereadable(fullname)
+                break
+            endif
+        endfor
         if ! filereadable(fullname)
             " the last try, using current directory based on file opened.
-            let fullname = expand('%:h') . '/' . fname
             " continue try for Node.js Module require algorithm
-            for ext in ['js', 'json', 'node']
+            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
+              let fullname = expand('%:h') . '/' . fname . relativeExt
               if filereadable(fullname)
                 break
               endif
-              let fullname = expand('%:h') . '/' . fname . '.' . ext
+            endfor
+        endif
+        " after relative try, try node_modules
+        if ! filereadable(fullname)
+            " continue try for Node.js Module require algorithm
+            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
+              let fullname = getcwd() . '/node_modules/' . fname . relativeExt
+              if filereadable(fullname)
+                break
+              endif
+            endfor
+        endif
+        if ! filereadable(fullname)
+            " continue try for Node.js Module require algorithm
+            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
+              let fullname = getcwd() . '/../node_modules/' . fname . relativeExt
+              if filereadable(fullname)
+                break
+              endif
+            endfor
+        endif
+        if ! filereadable(fullname)
+            " continue try for Node.js Module require algorithm
+            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
+              let fullname = getcwd() . '/../../node_modules/' . fname . relativeExt
+              if filereadable(fullname)
+                break
+              endif
             endfor
         endif
     endif
