@@ -38,7 +38,7 @@ function! GotoFile(w)
         if ! filereadable(fullname)
             " continue try for Node.js Module require algorithm
             for nodeModule in ['', '/..', '/../..']
-                for moduleExt in ['', '.js', '.json', '.node', '/index.js']
+                for moduleExt in ['', '.js', '.json', '.node', '/index.js', '/' . fname . '.js']
                     let fullname = getcwd() . nodeModule . '/node_modules/' . fname . moduleExt
                     if filereadable(fullname)
                         break
