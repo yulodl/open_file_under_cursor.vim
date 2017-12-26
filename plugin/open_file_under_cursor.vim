@@ -1,6 +1,6 @@
 " ----- Emulate 'gf' but recognize :line format -----
 function! GotoFile(w)
-    let curword = expand("<cfile>")
+    let curword = substitute(expand("<cWORD>"), "[';\"]", '', 'g')
     if (strlen(curword) == 0)
         return
     endif
@@ -17,8 +17,9 @@ function! GotoFile(w)
     if filereadable(fname)
         let fullname = fname
     else
+        let extArr = ['', '.js', '.json', '.node', '/index.js', '/index.json', '/index.node']
         " try find file with prefix by working directory
-        for rootExt in ['', '.js', '.json', '.node', '/index.js']
+        for rootExt in extArr
             let fullname = getcwd() . '/' . fname . rootExt
             if filereadable(fullname)
                 break
@@ -27,7 +28,7 @@ function! GotoFile(w)
         if ! filereadable(fullname)
             " the last try, using current directory based on file opened.
             " continue try for Node.js Module require algorithm
-            for relativeExt in ['', '.js', '.json', '.node', '/index.js']
+            for relativeExt in extArr
               let fullname = expand('%:h') . '/' . fname . relativeExt
               if filereadable(fullname)
                 break
@@ -38,12 +39,26 @@ function! GotoFile(w)
         if ! filereadable(fullname)
             " continue try for Node.js Module require algorithm
             for nodeModule in ['', '/..', '/../..']
-                for moduleExt in ['', '.js', '.json', '.node', '/index.js', '/' . fname . '.js', '/lib/index.js', '/lib/' . fname . '.js']
-                    let fullname = getcwd() . nodeModule . '/node_modules/' . fname . moduleExt
+                let basename = getcwd() . nodeModule . '/node_modules/' . fname
+                " load as file
+                for moduleExt in extArr
+                    let fullname = basename . moduleExt
                     if filereadable(fullname)
                         break
                     endif
                 endfor
+                " load as directory: find package.json 'main' field
+                if ! filereadable(fullname)
+                    let packagename = basename . '/package.json'
+                    if filereadable(packagename)
+                        for line in readfile(packagename)
+                            if line =~ '"main"'
+                                let fullname = basename . '/' . substitute(line, '"main":\|[," ]', '', 'g')
+                                break
+                            endif
+                        endfor
+                    endif
+                endif
                 if filereadable(fullname)
                     break
                 endif
