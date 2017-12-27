@@ -1,6 +1,6 @@
 " ----- Emulate 'gf' but recognize :line format -----
 function! GotoFile(w)
-    let curword = substitute(expand("<cWORD>"), "[';\"]", '', 'g')
+    let curword = substitute(matchstr(getline('.'), "['\"][^'\"]\*['\"]"), "['\"]", '', 'g')
     if (strlen(curword) == 0)
         return
     endif
