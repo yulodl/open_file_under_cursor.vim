@@ -55,8 +55,8 @@ function! GotoFile(w)
     endif
 
    " Open new window if requested
-    if a:w == "new"
-        new
+    if a:w != ""
+        execute a:w
     endif
     " Use 'find' so path is searched like 'gf' would
     " execute 'find ' . pos . ' ' . fname
@@ -67,5 +67,5 @@ set isfname+=: " include colon in filenames
 
 " Override vim commands 'gf', '^Wf', '^W^F'
 nnoremap gf :call GotoFile("")<CR>
-nnoremap <C-W>f :call GotoFile("new")<CR>
+nnoremap <C-W>f :call GotoFile("vne")<CR>
 nnoremap <C-W><C-F> :call GotoFile("new")<CR>
