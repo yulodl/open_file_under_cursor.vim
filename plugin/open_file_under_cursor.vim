@@ -13,57 +13,45 @@ function! GotoFile(w)
         let fname = curword
     endif
  
-    " check exists file.
-    if filereadable(fname)
-        let fullname = fname
-    else
-        let extArr = ['', '.js', '.json', '.node', '/index.js', '/index.json', '/index.node']
-        " try find file with prefix by working directory
-        for rootExt in extArr
-            let fullname = getcwd() . '/' . fname . rootExt
+    " Node.js Module require algorithm
+    let extArr = ['', '.js', '.json', '.node', '/index.js', '/index.json', '/index.node']
+
+    if (match(fname, '^[./]') == 0)
+        " start width . or /, relative check
+        " using current directory based on file opened.
+        for relativeExt in extArr
+            let fullname = expand('%:h') . '/' . fname . relativeExt
             if filereadable(fullname)
                 break
             endif
         endfor
-        if ! filereadable(fullname)
-            " the last try, using current directory based on file opened.
-            " continue try for Node.js Module require algorithm
-            for relativeExt in extArr
-              let fullname = expand('%:h') . '/' . fname . relativeExt
-              if filereadable(fullname)
-                break
-              endif
-            endfor
-        endif
-        " after relative try, try node_modules
-        if ! filereadable(fullname)
-            " continue try for Node.js Module require algorithm
-            for nodeModule in ['', '/..', '/../..']
-                let basename = getcwd() . nodeModule . '/node_modules/' . fname
-                " load as file
-                for moduleExt in extArr
-                    let fullname = basename . moduleExt
-                    if filereadable(fullname)
-                        break
-                    endif
-                endfor
-                " load as directory: find package.json 'main' field
-                if ! filereadable(fullname)
-                    let packagename = basename . '/package.json'
-                    if filereadable(packagename)
-                        for line in readfile(packagename)
-                            if line =~ '"main"'
-                                let fullname = basename . '/' . substitute(line, '"main":\|[," ]', '', 'g')
-                                break
-                            endif
-                        endfor
-                    endif
-                endif
+    else
+        " try node_modules
+        for nodeModule in ['', '/..', '/../..']
+            let basename = getcwd() . nodeModule . '/node_modules/' . fname
+            " load as file
+            for moduleExt in extArr
+                let fullname = basename . moduleExt
                 if filereadable(fullname)
                     break
                 endif
             endfor
-        endif
+            " load as directory: find package.json 'main' field
+            if ! filereadable(fullname)
+                let packagename = basename . '/package.json'
+                if filereadable(packagename)
+                    for line in readfile(packagename)
+                        if line =~ '"main"'
+                            let fullname = basename . '/' . substitute(line, '"main":\|[," ]', '', 'g')
+                            break
+                        endif
+                    endfor
+                endif
+            endif
+            if filereadable(fullname)
+                break
+            endif
+        endfor
     endif
 
    " Open new window if requested
