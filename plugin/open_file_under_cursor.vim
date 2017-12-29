@@ -16,7 +16,7 @@ function! GotoFile(w)
     " Node.js Module require algorithm
     let extArr = ['', '.js', '.json', '.node', '/index.js', '/index.json', '/index.node']
 
-    if (match(fname, '^[./]') == 0)
+    if (fname =~ '^[./]')
         " start width . or /, relative check
         " using current directory based on file opened.
         for relativeExt in extArr
