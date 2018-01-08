@@ -1,7 +1,53 @@
 " ----- Emulate 'gf' but recognize :line format -----
+function! GetFullNameAsFile(basename) 
+    let fileExtArr = ['', '.js', '.json', '.node']
+    for fileExt in fileExtArr
+        let fullname =  a:basename . fileExt
+        if filereadable(fullname)
+            return fullname
+        endif
+    endfor
+    return '';
+endfunction
+function! AppendIndexAsFile(basename)
+    return GetFullNameAsFile(a:basename . '/index')
+endfunction
+function! GetFullNameAsDirectory(basename)
+    let packagename = a:basename . '/package.json'
+    if filereadable(packagename)
+        for line in readfile(packagename)
+            if line =~ '"main"'
+                let basename = a:basename . '/' . substitute(line, '"main":\|[," ]', '', 'g')
+                let fullNameAsFile = GetFullNameAsFile(basename)
+                if len(fullNameAsFile)
+                    return fullNameAsFile
+                endif
+                let fullNameAppendIndex = AppendIndexAsFile(basename)
+                if len(fullNameAppendIndex)
+                    return fullNameAppendIndex
+                endif
+            endif
+        endfor
+    endif
+    return AppendIndexAsFile(a:basename)
+endfunction
+function! GetFullNameFromNodeMoudles(fname)
+    for nodeModule in ['', '/..', '/../..']
+        let basename = getcwd() . nodeModule . '/node_modules/' . a:fname
+        " load as file
+        let fullNameAsFile = GetFullNameAsFile(basename)
+        if len(fullNameAsFile)
+            return fullNameAsFile
+        endif
+        let fullNameAsDirectory = GetFullNameAsDirectory(basename)
+        if len(fullNameAsDirectory)
+            return fullNameAsDirectory
+        endif
+    endfor
+endfunction
 function! GotoFile(w)
     let curword = substitute(matchstr(getline('.'), "['\"][^'\"]\*['\"]"), "['\"]", '', 'g')
-    if (strlen(curword) == 0)
+    if (len(curword) == 0)
         return
     endif
     let matchstart = match(curword, ':\d\+$')
@@ -14,44 +60,17 @@ function! GotoFile(w)
     endif
  
     " Node.js Module require algorithm
-    let extArr = ['', '.js', '.json', '.node', '/index.js', '/index.json', '/index.node']
-
     if (fname =~ '^[./]')
         " start width . or /, relative check
         " using current directory based on file opened.
-        for relativeExt in extArr
-            let fullname = expand('%:h') . '/' . fname . relativeExt
-            if filereadable(fullname)
-                break
-            endif
-        endfor
+        let basename = expand('%:h') . '/' . fname
+        let fullname = GetFullNameAsFile(basename)
+        if ! len(fullname)
+            fullname = GetFullNameAsDirectory(basename)
+        endif
     else
         " try node_modules
-        for nodeModule in ['', '/..', '/../..']
-            let basename = getcwd() . nodeModule . '/node_modules/' . fname
-            " load as file
-            for moduleExt in extArr
-                let fullname = basename . moduleExt
-                if filereadable(fullname)
-                    break
-                endif
-            endfor
-            " load as directory: find package.json 'main' field
-            if ! filereadable(fullname)
-                let packagename = basename . '/package.json'
-                if filereadable(packagename)
-                    for line in readfile(packagename)
-                        if line =~ '"main"'
-                            let fullname = basename . '/' . substitute(line, '"main":\|[," ]', '', 'g')
-                            break
-                        endif
-                    endfor
-                endif
-            endif
-            if filereadable(fullname)
-                break
-            endif
-        endfor
+        let fullname = GetFullNameFromNodeMoudles(fname)
     endif
 
    " Open new window if requested
