@@ -7,7 +7,7 @@ function! GetFullNameAsFile(basename)
             return fullname
         endif
     endfor
-    return '';
+    return ''
 endfunction
 function! AppendIndexAsFile(basename)
     return GetFullNameAsFile(a:basename . '/index')
@@ -66,7 +66,7 @@ function! GotoFile(w)
         let basename = expand('%:h') . '/' . fname
         let fullname = GetFullNameAsFile(basename)
         if ! len(fullname)
-            fullname = GetFullNameAsDirectory(basename)
+            let fullname = GetFullNameAsDirectory(basename)
         endif
     else
         " try node_modules
