@@ -1,6 +1,6 @@
 " ----- Emulate 'gf' but recognize :line format -----
 function! GetFullNameAsFile(basename) 
-    let fileExtArr = ['', '.js', '.json', '.node']
+    let fileExtArr = ['', '.js', '.json', '.node', '.ts', '.tsx']
     for fileExt in fileExtArr
         let fullname =  a:basename . fileExt
         if filereadable(fullname)
@@ -47,6 +47,7 @@ function! GetFullNameFromNodeMoudles(fname)
 endfunction
 function! GotoFile(w)
     let curword = substitute(matchstr(getline('.'), "['\"][^'\"]\*['\"]"), "['\"]", '', 'g')
+    echo curword
     if (len(curword) == 0)
         return
     endif
@@ -86,5 +87,7 @@ set isfname+=: " include colon in filenames
 
 " Override vim commands 'gf', '^Wf', '^W^F'
 nnoremap gf :call GotoFile("")<CR>
-nnoremap <C-W>f :call GotoFile("vne")<CR>
-nnoremap <C-W><C-F> :call GotoFile("new")<CR>
+nnoremap <leader>fv :call GotoFile("vne")<CR>
+nnoremap <leader>fs :call GotoFile("new")<CR>
+" nnoremap <C-W>f :call GotoFile("vne")<CR>
+" nnoremap <C-W><C-F> :call GotoFile("new")<CR>
