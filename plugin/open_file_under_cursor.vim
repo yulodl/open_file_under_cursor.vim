@@ -1,6 +1,6 @@
 " ----- Emulate 'gf' but recognize :line format -----
 function! GetFullNameAsFile(basename) 
-    let fileExtArr = ['', '.js', '.json', '.node', '.ts', '.tsx']
+    let fileExtArr = ['', '.js', '.json', '.node', '.ts', '.tsx', '.scss']
     for fileExt in fileExtArr
         let fullname =  a:basename . fileExt
         if filereadable(fullname)
@@ -46,7 +46,8 @@ function! GetFullNameFromNodeMoudles(fname)
     endfor
 endfunction
 function! GotoFile(w)
-    let curword = substitute(matchstr(getline('.'), "['\"][^'\"]\*['\"]"), "['\"]", '', 'g')
+    " replace ~ for scss import
+    let curword = substitute(matchstr(getline('.'), "['\"][^'\"]\*['\"]"), "['\"~]", '', 'g')
     echo curword
     if (len(curword) == 0)
         return
