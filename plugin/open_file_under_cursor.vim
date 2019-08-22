@@ -32,8 +32,10 @@ function! GetFullNameAsDirectory(basename)
     return AppendIndexAsFile(a:basename)
 endfunction
 function! GetFullNameFromNodeMoudles(fname)
-    for nodeModule in ['', '/..', '/../..']
-        let basename = getcwd() . nodeModule . '/node_modules/' . a:fname
+    let filePath = expand('%:p:h')
+    echo filePath
+    while len(filePath)
+        let basename = filePath . '/node_modules/' . a:fname
         " load as file
         let fullNameAsFile = GetFullNameAsFile(basename)
         if len(fullNameAsFile)
@@ -43,7 +45,11 @@ function! GetFullNameFromNodeMoudles(fname)
         if len(fullNameAsDirectory)
             return fullNameAsDirectory
         endif
-    endfor
+        if filePath == '/'
+            break
+        endif
+        let filePath = fnamemodify(filePath, ':h')
+    endwhile
 endfunction
 function! GotoFile(w)
     " replace ~ for scss import
