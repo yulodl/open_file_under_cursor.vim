@@ -32,8 +32,7 @@ function! GetFullNameAsDirectory(basename)
     return AppendIndexAsFile(a:basename)
 endfunction
 function! GetFullNameFromNodeMoudles(fname)
-    let filePath = expand('%:p:h')
-    echo filePath
+    let filePath = expand('%:h')
     while len(filePath)
         let basename = filePath . '/node_modules/' . a:fname
         " load as file
@@ -50,11 +49,43 @@ function! GetFullNameFromNodeMoudles(fname)
         endif
         let filePath = fnamemodify(filePath, ':h')
     endwhile
+    return ''
+endfunction
+function! GetFullNameFromAlias(fname)
+    let configFiles = ['.eslintrc', '.eslintrc.js', 'webpack.config.js']
+    let filePath = expand('%:h')
+    while len(filePath)
+        for config in configFiles
+            let configFile =  filePath . '/' . config
+            if filereadable(configFile)
+                let aliasBlock = 0
+                for configLine in readfile(configFile)
+                    if configLine =~ 'alias'
+                        let aliasBlock = 1
+                        continue
+                    endif
+                    if aliasBlock
+                        if configLine =~ '},\?$'
+                            break
+                        endif
+                        let aliasList = matchlist(configLine, "^\\s\*['\"]\\?\\([^'\"]\\+\\)['\"]\\?[^'\"]\\+['\"]\\([^'\"]\\+\\)")
+                        if a:fname =~ '^' . aliasList[1]
+                            return filePath . '/' . substitute(a:fname, aliasList[1], aliasList[2], '')
+                        endif
+                    endif
+                endfor
+            endif
+        endfor
+        if filePath == '/'
+            break
+        endif
+        let filePath = fnamemodify(filePath, ':h')
+    endwhile
+    return ''
 endfunction
 function! GotoFile(w)
     " replace ~ for scss import
     let curword = substitute(matchstr(getline('.'), "['\"][^'\"]\*['\"]"), "['\"~]", '', 'g')
-    echo curword
     if (len(curword) == 0)
         return
     endif
@@ -79,6 +110,10 @@ function! GotoFile(w)
     else
         " try node_modules
         let fullname = GetFullNameFromNodeMoudles(fname)
+        " try eslint or webpack alias
+        if ! len(fullname)
+            let fullname = GetFullNameFromAlias(fname)
+        endif
     endif
 
    " Open new window if requested
