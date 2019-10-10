@@ -10,7 +10,11 @@ function! GetFullNameAsFile(basename)
     return ''
 endfunction
 function! AppendIndexAsFile(basename)
-    return GetFullNameAsFile(a:basename . '/index')
+    let fullname = GetFullNameAsFile(a:basename)
+    if ! len(fullname) 
+        let fullname = GetFullNameAsFile(a:basename . '/index')
+    endif
+    return fullname
 endfunction
 function! GetFullNameAsDirectory(basename)
     let packagename = a:basename . '/package.json'
@@ -18,10 +22,6 @@ function! GetFullNameAsDirectory(basename)
         for line in readfile(packagename)
             if line =~ '"main"'
                 let basename = a:basename . '/' . substitute(line, '"main":\|[," ]', '', 'g')
-                let fullNameAsFile = GetFullNameAsFile(basename)
-                if len(fullNameAsFile)
-                    return fullNameAsFile
-                endif
                 let fullNameAppendIndex = AppendIndexAsFile(basename)
                 if len(fullNameAppendIndex)
                     return fullNameAppendIndex
@@ -32,14 +32,9 @@ function! GetFullNameAsDirectory(basename)
     return AppendIndexAsFile(a:basename)
 endfunction
 function! GetFullNameFromNodeMoudles(fname)
-    let filePath = expand('%:h')
+    let filePath = expand('%:p:h')
     while len(filePath)
         let basename = filePath . '/node_modules/' . a:fname
-        " load as file
-        let fullNameAsFile = GetFullNameAsFile(basename)
-        if len(fullNameAsFile)
-            return fullNameAsFile
-        endif
         let fullNameAsDirectory = GetFullNameAsDirectory(basename)
         if len(fullNameAsDirectory)
             return fullNameAsDirectory
@@ -51,9 +46,28 @@ function! GetFullNameFromNodeMoudles(fname)
     endwhile
     return ''
 endfunction
+function! GetFullNameFromBabelResolver(fname)
+    " support babel plugin: ['moudle-resolver', {root: ['.']}]
+    let configFiles = ['.babelrc', 'babel.config.js']
+    let filePath = expand('%:p:h')
+    while len(filePath)
+        for config in configFiles
+            let configFile =  filePath . '/' . config
+            let fullName = GetFullNameAsDirectory(filePath . '/' . a:fname)
+            if filereadable(configFile) && filereadable(fullName)
+                return fullName
+            endif
+        endfor
+        if filePath == '/'
+            break
+        endif
+        let filePath = fnamemodify(filePath, ':h')
+    endwhile
+    return ''
+endfunction
 function! GetFullNameFromAlias(fname)
     let configFiles = ['.eslintrc', '.eslintrc.js', 'webpack.config.js']
-    let filePath = expand('%:h')
+    let filePath = expand('%:p:h')
     while len(filePath)
         for config in configFiles
             let configFile =  filePath . '/' . config
@@ -70,7 +84,7 @@ function! GetFullNameFromAlias(fname)
                         endif
                         let aliasList = matchlist(configLine, "^\\s\*['\"]\\?\\([^'\"]\\+\\)['\"]\\?[^'\"]\\+['\"]\\([^'\"]\\+\\)")
                         if a:fname =~ '^' . aliasList[1]
-                            return filePath . '/' . substitute(a:fname, aliasList[1], aliasList[2], '')
+                            return GetFullNameAsDirectory(filePath . '/' . substitute(a:fname, aliasList[1], aliasList[2], ''))
                         endif
                     endif
                 endfor
@@ -103,13 +117,14 @@ function! GotoFile(w)
         " start width . or /, relative check
         " using current directory based on file opened.
         let basename = expand('%:h') . '/' . fname
-        let fullname = GetFullNameAsFile(basename)
-        if ! len(fullname)
-            let fullname = GetFullNameAsDirectory(basename)
-        endif
+        let fullname = GetFullNameAsDirectory(basename)
     else
         " try node_modules
         let fullname = GetFullNameFromNodeMoudles(fname)
+        " try babel plugin moudle resolver
+        if ! len(fullname)
+            let fullname = GetFullNameFromBabelResolver(fname)
+        endif
         " try eslint or webpack alias
         if ! len(fullname)
             let fullname = GetFullNameFromAlias(fname)
