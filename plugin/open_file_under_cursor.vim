@@ -47,16 +47,19 @@ function! GetFullNameFromNodeMoudles(fname)
     return ''
 endfunction
 function! GetFullNameFromBabelResolver(fname)
-    " support babel plugin: ['moudle-resolver', {root: ['.']}]
+    " support babel plugin: ['moudle-resolver', {root: ['.', './src']}]
     let configFiles = ['.babelrc', 'babel.config.js']
+    let roots = ['/', '/src/']
     let filePath = expand('%:p:h')
     while len(filePath)
         for config in configFiles
             let configFile =  filePath . '/' . config
-            let fullName = GetFullNameAsDirectory(filePath . '/' . a:fname)
-            if filereadable(configFile) && filereadable(fullName)
-                return fullName
-            endif
+            for root in roots
+                let fullName = GetFullNameAsDirectory(filePath . root . a:fname)
+                if filereadable(configFile) && filereadable(fullName)
+                    return fullName
+                endif
+            endfor
         endfor
         if filePath == '/'
             break
