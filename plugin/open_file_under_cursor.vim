@@ -1,6 +1,6 @@
 " ----- Emulate 'gf' but recognize :line format -----
 function! GetFullNameAsFile(basename) 
-    let fileExtArr = ['', '.js', '.json', '.node', '.ts', '.tsx', '.scss', '.vue']
+    let fileExtArr = ['', '.js', '.json', '.node', '.ts', '.tsx', '.vue', '.scss']
     for fileExt in fileExtArr
         let fullname =  a:basename . fileExt
         if filereadable(fullname)
