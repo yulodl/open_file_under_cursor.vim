@@ -19,14 +19,17 @@ endfunction
 function! GetFullNameAsDirectory(basename)
     let packagename = a:basename . '/package.json'
     if filereadable(packagename)
-        for line in readfile(packagename)
-            if line =~ '"main"'
-                let basename = a:basename . '/' . substitute(line, '"main":\|[," ]', '', 'g')
-                let fullNameAppendIndex = AppendIndexAsFile(basename)
-                if len(fullNameAppendIndex)
-                    return fullNameAppendIndex
+        let lines = readfile(packagename)
+        for field in ['"module"', '"main"'] 
+            for line in lines
+                if line =~ field
+                    let basename = a:basename . '/' . substitute(line, field . ':\|[," ]', '', 'g')
+                    let fullNameAppendIndex = AppendIndexAsFile(basename)
+                    if len(fullNameAppendIndex)
+                        return fullNameAppendIndex
+                    endif
                 endif
-            endif
+            endfor
         endfor
     endif
     return AppendIndexAsFile(a:basename)
