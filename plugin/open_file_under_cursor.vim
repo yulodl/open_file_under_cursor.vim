@@ -51,7 +51,7 @@ function! GetFullNameFromNodeMoudles(fname)
 endfunction
 function! GetFullNameFromBabelResolver(fname)
     " support babel plugin: ['moudle-resolver', {root: ['.', './src']}]
-    let configFiles = ['.babelrc', 'babel.config.js']
+    let configFiles = ['.babelrc', 'babel.config.js', 'tsconfig.json']
     let roots = ['/', '/src/']
     let filePath = expand('%:p:h')
     while len(filePath)
