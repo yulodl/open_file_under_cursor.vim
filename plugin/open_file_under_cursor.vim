@@ -66,7 +66,8 @@ function! GetFullNameFromNodeMoudles(fname)
 endfunction
 function! GetFullNameFromBabelResolver(fname)
     " support babel plugin: ['moudle-resolver', {root: ['.', './src']}]
-    let configFiles = ['.babelrc', 'babel.config.js', 'tsconfig.json']
+    " eslintConfig in package.json eslint-plugin-import node resolver: {moduleDirectory: ['./src']}
+    let configFiles = ['.babelrc', 'babel.config.js', 'tsconfig.json', 'package.json']
     let roots = ['/', '/src/']
     let filePath = expand('%:p:h')
     while len(filePath)
