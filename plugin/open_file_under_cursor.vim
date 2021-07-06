@@ -39,23 +39,30 @@ function! GetFullNameFromNodeMoudles(fname)
     let arr = split(a:fname, '/')
     let packageName = arr[0]
     if arr[0][0] == '@'
-        packageName = arr[0] . '/' . arr[1]
+        let packageName = arr[0] . '/' . arr[1]
     endif
 
     while len(filePath)
-        let basename = filePath . '/node_modules/' . a:fname
-        let fullNameAsDirectory = GetFullNameAsDirectory(basename)
-        if len(fullNameAsDirectory)
-            return fullNameAsDirectory
-        endif
         " support package.json exports: {'./': './src/'}
         let packageRoot = filePath . '/node_modules/' . packageName
         if filereadable(packageRoot . '/package.json') && isdirectory(packageRoot . '/src')
+            " try index outside src directory
+            if packageName == a:fname
+                let fullNameAsDirectory = AppendIndexAsFile(packageRoot)
+                if len(fullNameAsDirectory)
+                    return fullNameAsDirectory
+                endif
+            endif
             let basename = packageRoot . '/src' . substitute(a:fname, packageName, '', '')
             let fullNameAsDirectory = GetFullNameAsDirectory(basename)
             if len(fullNameAsDirectory)
                 return fullNameAsDirectory
             endif
+        endif
+        let basename = filePath . '/node_modules/' . a:fname
+        let fullNameAsDirectory = GetFullNameAsDirectory(basename)
+        if len(fullNameAsDirectory)
+            return fullNameAsDirectory
         endif
         if filePath == '/'
             break
